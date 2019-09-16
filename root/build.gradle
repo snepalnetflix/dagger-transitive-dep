@@ -1,0 +1,61 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.example.multi"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+dependencies {
+    implementation kotlin_stdlib
+    implementation "androidx.appcompat:appcompat:$androidx.appcompat"
+    implementation "androidx.core:core-ktx:$androidx.corektx"
+
+    implementation "com.google.dagger:dagger:$daggerVersion"
+    kapt "com.google.dagger:dagger-compiler:$daggerVersion"
+
+    implementation project(":home")
+}
+
+def ARTIFACT_TYPE = Attribute.of("artifactType", String.class);
+
+afterEvaluate {
+    android {
+//    libraryVariants.forEach { variant ->  //com.android.library
+        applicationVariants.forEach { variant ->//com.android.application
+            def compileWithJavac = variant.javaCompileProvider
+            def runtimeClasspath = variant.runtimeConfiguration
+
+            compileWithJavac.configure {
+                doFirst {
+                    def copiedConfiguration = runtimeClasspath.copyRecursive()
+
+                    //filter for jars only
+                    def artifactType = ARTIFACT_TYPE
+                    def jar = ArtifactTypeDefinition.JAR_TYPE
+                    copiedConfiguration.attributes.attribute(artifactType, jar)
+
+                    def devDebugRuntimeClasspathJars = copiedConfiguration.fileCollection { true }
+                    classpath = classpath.plus(devDebugRuntimeClasspathJars)
+                }
+            }
+        }
+    }
+}

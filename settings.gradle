@@ -1,0 +1,5 @@
+include ':root'
+include ':home'
+include ':feature'
+
+rootProject.name='dagger_transitive_dep'
